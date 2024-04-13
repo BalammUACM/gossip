@@ -26,19 +26,19 @@ import javax.management.NotificationListener;
 
 public class Client implements NotificationListener {
 
-	private ArrayList<Nodo> memberList;
+	private ArrayList<Nodo> listaNodos;
 
-	private ArrayList<Nodo> deadList;
+	private ArrayList<Nodo> Lista_infectados;
 
-	private int t_gossip; //in ms
+	private int tiempo_gossip; //in ms
 
-	public int t_cleanup; //in ms
+	public int tiempo_Limpiando; //in ms
 
 	private Random random;
 
 	private DatagramSocket server;
 
-	private String myAddress;
+	private String mi_direccion;
 
 	private Nodo me;
 
@@ -52,46 +52,46 @@ public class Client implements NotificationListener {
 
 		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
 			public void run() {
-				System.out.println("Goodbye my friends...");
+				System.out.println("adios amigos :( ...");
 			}
 		}));
 
-		memberList = new ArrayList<Nodo>();
+		listaNodos = new ArrayList<Nodo>();
 
-		deadList = new ArrayList<Nodo>();
+		Lista_infectados = new ArrayList<Nodo>();
 
-		t_gossip = 100; // 1 second TODO: make configurable
+		tiempo_gossip = 100; // 1 second TODO: make configurable
 
-		t_cleanup = 10000; // 10 seconds TODO: make configurable
+		tiempo_Limpiando = 10000; // 10 seconds TODO: make configurable
 
 		random = new Random();
 
 		int port = 0;
 
-		String myIpAddress = InetAddress.getLocalHost().getHostAddress();
-		this.myAddress = myIpAddress + ":" + port;
+		String mi_Dir_Ip = InetAddress.getLocalHost().getHostAddress();
+		this.mi_direccion = mi_Dir_Ip + ":" + port;
 
-		ArrayList<String> startupHostsList = parseStartupMembers();
+		ArrayList<String> startupHostsList = parseStartupnodos();
 
 		// loop over the initial hosts, and find ourselves
 		for (String host : startupHostsList) {
 
-			Nodo member = new Nodo(host, 0, this, t_cleanup);
+			Nodo nodo = new Nodo(host, 0, this, tiempo_Limpiando);
 
-			if(host.contains(myIpAddress)) {
-				// save our own Member class so we can increment our heartbeat later
-				me = member;
+			if(host.contains(mi_Dir_Ip)) {
+				// save our own nodo class so we can increment our heartbeat later
+				me = nodo;
 				port = Integer.parseInt(host.split(":")[1]);
-				this.myAddress = myIpAddress + ":" + port;
-				System.out.println("I am " + me);
+				this.mi_direccion = mi_Dir_Ip + ":" + port;
+				System.out.println("soy " + me);
 			}
-			memberList.add(member);
+			listaNodos.add(nodo);
 		}
 
-		System.out.println("Original Member List");
+		System.out.println("Original lista de Nodost");
 		System.out.println("---------------------");
-		for (Nodo member : memberList) {
-			System.out.println(member);
+		for (Nodo nodo : listaNodos) {
+			System.out.println(nodo);
 		}
 
 		if(port != 0) {
@@ -107,13 +107,13 @@ public class Client implements NotificationListener {
 	}
 
 	/**
-	 * In order to have some membership lists at startup, we read the IP addresses
+	 * In order to have some nodoship lists at startup, we read the IP addresses
 	 * and port at a newline delimited config file.
 	 * @return List of <IP address:port> Strings
 	 */
-	private ArrayList<String> parseStartupMembers() {
+	private ArrayList<String> parseStartupnodos() {
 		ArrayList<String> startupHostsList = new ArrayList<String>();
-		File startupConfig = new File("config","startup_members");
+		File startupConfig = new File("config","startup_nodos");
 
 		try {
 			BufferedReader br = new BufferedReader(new FileReader(startupConfig));
@@ -132,24 +132,24 @@ public class Client implements NotificationListener {
 	}
 
 	/**
-	 * Performs the sending of the membership list, after we have
+	 * Performs the sending of the nodoship list, after we have
 	 * incremented our own heartbeat.
 	 */
-	private void sendMembershipList() {
+	private void sendnodoshipList() {
 
-		this.me.setHeartbeat(me.getHeartbeat() + 1);
+		this.me.setinfectados(me.getinfectados() + 1);
 
-		synchronized (this.memberList) {
+		synchronized (this.listaNodos) {
 			try {
-				Nodo member = getRandomMember();
+				Nodo nodo = getRandomnodo();
 
-				if(member != null) {
+				if(nodo != null) {
 					ByteArrayOutputStream baos = new ByteArrayOutputStream();
 					ObjectOutputStream oos = new ObjectOutputStream(baos);
-					oos.writeObject(this.memberList);
+					oos.writeObject(this.listaNodos);
 					byte[] buf = baos.toByteArray();
 
-					String address = member.getAddress();
+					String address = nodo.getAddress();
 					String host = address.split(":")[0];
 					int port = Integer.parseInt(address.split(":")[1]);
 
@@ -158,7 +158,7 @@ public class Client implements NotificationListener {
 
 					System.out.println("Sending to " + dest);
 					System.out.println("---------------------");
-					for (Nodo m : memberList) {
+					for (Nodo m : listaNodos) {
 						System.out.println(m);
 					}
 					System.out.println("---------------------");
@@ -180,45 +180,45 @@ public class Client implements NotificationListener {
 	}
 
 	/**
-	 * Find a random peer from the local membership list.
+	 * Find a random peer from the local nodoship list.
 	 * Ensure that we do not select ourselves, and keep
 	 * trying 10 times if we do.  Therefore, in the case 
-	 * where this client is the only member in the list, 
+	 * where this client is the only nodo in the list, 
 	 * this method will return null
-	 * @return Member random member if list is greater than 1, null otherwise
+	 * @return nodo random nodo if list is greater than 1, null otherwise
 	 */
-	private Nodo getRandomMember() {
-		Nodo member = null;
+	private Nodo getRandomnodo() {
+		Nodo nodo = null;
 
-		if(this.memberList.size() > 1) {
+		if(this.listaNodos.size() > 1) {
 			int tries = 10;
 			do {
-				int randomNeighborIndex = random.nextInt(this.memberList.size());
-				member = this.memberList.get(randomNeighborIndex);
+				int randomNeighborIndex = random.nextInt(this.listaNodos.size());
+				nodo = this.listaNodos.get(randomNeighborIndex);
 				if(--tries <= 0) {
-					member = null;
+					nodo = null;
 					break;
 				}
-			} while(member.getAddress().equals(this.myAddress));
+			} while(nodo.getAddress().equals(this.mi_direccion));
 		}
 		else {
-			System.out.println("I am alone in this world.");
+			System.out.println("estoy solo :( .");
 		}
 
-		return member;
+		return nodo;
 	}
 
 	/**
-	 * The class handles gossiping the membership list.
+	 * The class handles gossiping the nodoship list.
 	 * This information is important to maintaining a common
 	 * state among all the nodes, and is important for detecting
 	 * failures.
 	 */
-	private class MembershipGossiper implements Runnable {
+	private class nodoshipGossiper implements Runnable {
 
 		private AtomicBoolean keepRunning;
 
-		public MembershipGossiper() {
+		public nodoshipGossiper() {
 			this.keepRunning = new AtomicBoolean(true);
 		}
 
@@ -226,11 +226,11 @@ public class Client implements NotificationListener {
 		public void run() {
 			while(this.keepRunning.get()) {
 				try {
-					TimeUnit.MILLISECONDS.sleep(t_gossip);
-					sendMembershipList();
+					TimeUnit.MILLISECONDS.sleep(tiempo_gossip);
+					sendnodoshipList();
 				} catch (InterruptedException e) {
 					// TODO: handle exception
-					// This membership thread was interrupted externally, shutdown
+					// This nodoship thread was interrupted externally, shutdown
 					e.printStackTrace();
 					keepRunning.set(false);
 				}
@@ -244,7 +244,7 @@ public class Client implements NotificationListener {
 	/**
 	 * This class handles the passive cycle, where this client
 	 * has received an incoming message.  For now, this message
-	 * is always the membership list, but if you choose to gossip
+	 * is always the nodoship list, but if you choose to gossip
 	 * additional information, you will need some logic to determine
 	 * the incoming message.
 	 */
@@ -266,7 +266,7 @@ public class Client implements NotificationListener {
 					DatagramPacket p = new DatagramPacket(buf, buf.length);
 					server.receive(p);
 
-					// extract the member arraylist out of the packet
+					// extract the nodo arraylist out of the packet
 					// TODO: maybe abstract this out to pass just the bytes needed
 					ByteArrayInputStream bais = new ByteArrayInputStream(p.getData());
 					ObjectInputStream ois = new ObjectInputStream(bais);
@@ -275,9 +275,9 @@ public class Client implements NotificationListener {
 					if(readObject instanceof ArrayList<?>) {
 						ArrayList<Nodo> list = (ArrayList<Nodo>) readObject;
 
-						System.out.println("Received member list:");
-						for (Nodo member : list) {
-							System.out.println(member);
+						System.out.println("Received nodo list:");
+						for (Nodo nodo : list) {
+							System.out.println(nodo);
 						}
 						// Merge our list with the one we just received
 						mergeLists(list);
@@ -294,51 +294,51 @@ public class Client implements NotificationListener {
 		}
 
 		/**
-		 * Merge remote list (received from peer), and our local member list.
+		 * Merge remote list (received from peer), and our local nodo list.
 		 * Simply, we must update the heartbeats that the remote list has with
 		 * our list.  Also, some additional logic is needed to make sure we have 
-		 * not timed out a member and then immediately received a list with that 
-		 * member.
+		 * not timed out a nodo and then immediately received a list with that 
+		 * nodo.
 		 * @param remoteList
 		 */
 		private void mergeLists(ArrayList<Nodo> remoteList) {
 
-			synchronized (Client.this.deadList) {
+			synchronized (Client.this.Lista_infectados) {
 
-				synchronized (Client.this.memberList) {
+				synchronized (Client.this.listaNodos) {
 
-					for (Nodo remoteMember : remoteList) {
-						if(Client.this.memberList.contains(remoteMember)) {
-							Nodo localMember = Client.this.memberList.get(Client.this.memberList.indexOf(remoteMember));
+					for (Nodo remotenodo : remoteList) {
+						if(Client.this.listaNodos.contains(remotenodo)) {
+							Nodo localnodo = Client.this.listaNodos.get(Client.this.listaNodos.indexOf(remotenodo));
 
-							if(remoteMember.getHeartbeat() > localMember.getHeartbeat()) {
+							if(remotenodo.getinfectados() > localnodo.getinfectados()) {
 								// update local list with latest heartbeat
-								localMember.setHeartbeat(remoteMember.getHeartbeat());
-								// and reset the timeout of that member
-								localMember.resetTimeoutTimer();
+								localnodo.setinfectados(remotenodo.getinfectados());
+								// and reset the timeout of that nodo
+								localnodo.resetTimeoutTimer();
 							}
 						}
 						else {
-							// the local list does not contain the remote member
+							// the local list does not contain the remote nodo
 
-							// the remote member is either brand new, or a previously declared dead member
+							// the remote nodo is either brand new, or a previously declared dead nodo
 							// if its dead, check the heartbeat because it may have come back from the dead
 
-							if(Client.this.deadList.contains(remoteMember)) {
-								Nodo localDeadMember = Client.this.deadList.get(Client.this.deadList.indexOf(remoteMember));
-								if(remoteMember.getHeartbeat() > localDeadMember.getHeartbeat()) {
+							if(Client.this.Lista_infectados.contains(remotenodo)) {
+								Nodo localnodo_infectado = Client.this.Lista_infectados.get(Client.this.Lista_infectados.indexOf(remotenodo));
+								if(remotenodo.getinfectados() > localnodo_infectado.getinfectados()) {
 									// it's baa-aack
-									Client.this.deadList.remove(localDeadMember);
-									Nodo newLocalMember = new Nodo(remoteMember.getAddress(), remoteMember.getHeartbeat(), Client.this, t_cleanup);
-									Client.this.memberList.add(newLocalMember);
-									newLocalMember.startTimeoutTimer();
+									Client.this.Lista_infectados.remove(localnodo_infectado);
+									Nodo newLocalnodo = new Nodo(remotenodo.getAddress(), remotenodo.getinfectados(), Client.this, tiempo_Limpiando);
+									Client.this.listaNodos.add(newLocalnodo);
+									newLocalnodo.startTimeoutTimer();
 								} // else ignore
 							}
 							else {
-								// brand spanking new member - welcome
-								Nodo newLocalMember = new Nodo(remoteMember.getAddress(), remoteMember.getHeartbeat(), Client.this, t_cleanup);
-								Client.this.memberList.add(newLocalMember);
-								newLocalMember.startTimeoutTimer();
+								// brand spanking new nodo - welcome
+								Nodo newLocalnodo = new Nodo(remotenodo.getAddress(), remotenodo.getinfectados(), Client.this, tiempo_Limpiando);
+								Client.this.listaNodos.add(newLocalnodo);
+								newLocalnodo.startTimeoutTimer();
 							}
 						}
 					}
@@ -355,20 +355,20 @@ public class Client implements NotificationListener {
 	private void start() throws InterruptedException {
 
 		// Start all timers except for me
-		for (Nodo member : memberList) {
-			if(member != me) {
-				member.startTimeoutTimer();
+		for (Nodo nodo : listaNodos) {
+			if(nodo != me) {
+				nodo.startTimeoutTimer();
 			}
 		}
 
 		// Start the two worker threads
 		ExecutorService executor = Executors.newCachedThreadPool();
 		//  The receiver thread is a passive player that handles
-		//  merging incoming membership lists from other neighbors.
+		//  merging incoming nodoship lists from other neighbors.
 		executor.execute(new AsychronousReceiver());
 		//  The gossiper thread is an active player that 
-		//  selects a neighbor to share its membership list
-		executor.execute(new MembershipGossiper());
+		//  selects a neighbor to share its nodoship list
+		executor.execute(new nodoshipGossiper());
 
 		// Potentially, you could kick off more threads here
 		//  that could perform additional data synching
@@ -386,23 +386,23 @@ public class Client implements NotificationListener {
 	}
 
 	/**
-	 * All timers associated with a member will trigger this method when it goes
-	 * off.  The timer will go off if we have not heard from this member in
-	 * <code> t_cleanup </code> time.
+	 * All timers associated with a nodo will trigger this method when it goes
+	 * off.  The timer will go off if we have not heard from this nodo in
+	 * <code> tiempo_Limpiando </code> time.
 	 */
 	@Override
 	public void handleNotification(Notification notification, Object handback) {
 
-		Nodo deadMember = (Nodo) notification.getUserData();
+		Nodo nodo_infectado = (Nodo) notification.getUserData();
 
-		System.out.println("Dead member detected: " + deadMember);
+		System.out.println("nodo infectado detectado: " + nodo_infectado);
 
-		synchronized (this.memberList) {
-			this.memberList.remove(deadMember);
+		synchronized (this.listaNodos) {
+			this.listaNodos.remove(nodo_infectado);
 		}
 
-		synchronized (this.deadList) {
-			this.deadList.add(deadMember);
+		synchronized (this.Lista_infectados) {
+			this.Lista_infectados.add(nodo_infectado);
 		}
 
 	}

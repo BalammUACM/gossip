@@ -13,13 +13,13 @@ public class Nodo implements Serializable {
 	 */
 	private String address;
 
-	private int heartbeat;
+	private int infectados;
 
 	private transient TimeoutTimer timeoutTimer;
 
-	public Nodo(String address, int heartbeat, Client client, int t_cleanup) {
+	public Nodo(String address, int infectados, Client client, int t_cleanup) {
 		this.address = address;
-		this.heartbeat = heartbeat;
+		this.infectados = infectados;
 		this.timeoutTimer = new TimeoutTimer(t_cleanup, client, this);
 	}
 
@@ -35,17 +35,17 @@ public class Nodo implements Serializable {
 		return address;
 	}
 
-	public int getHeartbeat() {
-		return heartbeat;
+	public int getinfectados() {
+		return infectados;
 	}
 
-	public void setHeartbeat(int heartbeat) {
-		this.heartbeat = heartbeat;
+	public void setinfectados(int infectados) {
+		this.infectados = infectados;
 	}
 
 	@Override
 	public String toString() {
-		return "Member [address=" + address + ", heartbeat=" + heartbeat + "]";
+		return "Nodo [Direccion=" + address + ", infectados=" + infectados + "]";
 	}
 
 	/* (non-Javadoc)
