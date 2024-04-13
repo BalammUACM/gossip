@@ -3,7 +3,7 @@ package gossip;
 import java.io.Serializable;
 import java.net.InetSocketAddress;
 
-public class Member implements Serializable {
+public class Nodo implements Serializable {
 
 	private static final long serialVersionUID = 8387950590016941525L;
 
@@ -17,7 +17,7 @@ public class Member implements Serializable {
 
 	private transient TimeoutTimer timeoutTimer;
 
-	public Member(String address, int heartbeat, Client client, int t_cleanup) {
+	public Nodo(String address, int heartbeat, Client client, int t_cleanup) {
 		this.address = address;
 		this.heartbeat = heartbeat;
 		this.timeoutTimer = new TimeoutTimer(t_cleanup, client, this);
@@ -74,7 +74,7 @@ public class Member implements Serializable {
 		if (getClass() != obj.getClass()) {
 			return false;
 		}
-		Member other = (Member) obj;
+		Nodo other = (Nodo) obj;
 		if (address == null) {
 			if (other.address != null) {
 				return false;

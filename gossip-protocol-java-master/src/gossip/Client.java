@@ -26,9 +26,9 @@ import javax.management.NotificationListener;
 
 public class Client implements NotificationListener {
 
-	private ArrayList<Member> memberList;
+	private ArrayList<Nodo> memberList;
 
-	private ArrayList<Member> deadList;
+	private ArrayList<Nodo> deadList;
 
 	private int t_gossip; //in ms
 
@@ -40,7 +40,7 @@ public class Client implements NotificationListener {
 
 	private String myAddress;
 
-	private Member me;
+	private Nodo me;
 
 	/**
 	 * Setup the client's lists, gossiping parameters, and parse the startup config file.
@@ -56,9 +56,9 @@ public class Client implements NotificationListener {
 			}
 		}));
 
-		memberList = new ArrayList<Member>();
+		memberList = new ArrayList<Nodo>();
 
-		deadList = new ArrayList<Member>();
+		deadList = new ArrayList<Nodo>();
 
 		t_gossip = 100; // 1 second TODO: make configurable
 
@@ -76,7 +76,7 @@ public class Client implements NotificationListener {
 		// loop over the initial hosts, and find ourselves
 		for (String host : startupHostsList) {
 
-			Member member = new Member(host, 0, this, t_cleanup);
+			Nodo member = new Nodo(host, 0, this, t_cleanup);
 
 			if(host.contains(myIpAddress)) {
 				// save our own Member class so we can increment our heartbeat later
@@ -90,7 +90,7 @@ public class Client implements NotificationListener {
 
 		System.out.println("Original Member List");
 		System.out.println("---------------------");
-		for (Member member : memberList) {
+		for (Nodo member : memberList) {
 			System.out.println(member);
 		}
 
@@ -141,7 +141,7 @@ public class Client implements NotificationListener {
 
 		synchronized (this.memberList) {
 			try {
-				Member member = getRandomMember();
+				Nodo member = getRandomMember();
 
 				if(member != null) {
 					ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -158,7 +158,7 @@ public class Client implements NotificationListener {
 
 					System.out.println("Sending to " + dest);
 					System.out.println("---------------------");
-					for (Member m : memberList) {
+					for (Nodo m : memberList) {
 						System.out.println(m);
 					}
 					System.out.println("---------------------");
@@ -187,8 +187,8 @@ public class Client implements NotificationListener {
 	 * this method will return null
 	 * @return Member random member if list is greater than 1, null otherwise
 	 */
-	private Member getRandomMember() {
-		Member member = null;
+	private Nodo getRandomMember() {
+		Nodo member = null;
 
 		if(this.memberList.size() > 1) {
 			int tries = 10;
@@ -273,10 +273,10 @@ public class Client implements NotificationListener {
 
 					Object readObject = ois.readObject();
 					if(readObject instanceof ArrayList<?>) {
-						ArrayList<Member> list = (ArrayList<Member>) readObject;
+						ArrayList<Nodo> list = (ArrayList<Nodo>) readObject;
 
 						System.out.println("Received member list:");
-						for (Member member : list) {
+						for (Nodo member : list) {
 							System.out.println(member);
 						}
 						// Merge our list with the one we just received
@@ -301,15 +301,15 @@ public class Client implements NotificationListener {
 		 * member.
 		 * @param remoteList
 		 */
-		private void mergeLists(ArrayList<Member> remoteList) {
+		private void mergeLists(ArrayList<Nodo> remoteList) {
 
 			synchronized (Client.this.deadList) {
 
 				synchronized (Client.this.memberList) {
 
-					for (Member remoteMember : remoteList) {
+					for (Nodo remoteMember : remoteList) {
 						if(Client.this.memberList.contains(remoteMember)) {
-							Member localMember = Client.this.memberList.get(Client.this.memberList.indexOf(remoteMember));
+							Nodo localMember = Client.this.memberList.get(Client.this.memberList.indexOf(remoteMember));
 
 							if(remoteMember.getHeartbeat() > localMember.getHeartbeat()) {
 								// update local list with latest heartbeat
@@ -325,18 +325,18 @@ public class Client implements NotificationListener {
 							// if its dead, check the heartbeat because it may have come back from the dead
 
 							if(Client.this.deadList.contains(remoteMember)) {
-								Member localDeadMember = Client.this.deadList.get(Client.this.deadList.indexOf(remoteMember));
+								Nodo localDeadMember = Client.this.deadList.get(Client.this.deadList.indexOf(remoteMember));
 								if(remoteMember.getHeartbeat() > localDeadMember.getHeartbeat()) {
 									// it's baa-aack
 									Client.this.deadList.remove(localDeadMember);
-									Member newLocalMember = new Member(remoteMember.getAddress(), remoteMember.getHeartbeat(), Client.this, t_cleanup);
+									Nodo newLocalMember = new Nodo(remoteMember.getAddress(), remoteMember.getHeartbeat(), Client.this, t_cleanup);
 									Client.this.memberList.add(newLocalMember);
 									newLocalMember.startTimeoutTimer();
 								} // else ignore
 							}
 							else {
 								// brand spanking new member - welcome
-								Member newLocalMember = new Member(remoteMember.getAddress(), remoteMember.getHeartbeat(), Client.this, t_cleanup);
+								Nodo newLocalMember = new Nodo(remoteMember.getAddress(), remoteMember.getHeartbeat(), Client.this, t_cleanup);
 								Client.this.memberList.add(newLocalMember);
 								newLocalMember.startTimeoutTimer();
 							}
@@ -355,7 +355,7 @@ public class Client implements NotificationListener {
 	private void start() throws InterruptedException {
 
 		// Start all timers except for me
-		for (Member member : memberList) {
+		for (Nodo member : memberList) {
 			if(member != me) {
 				member.startTimeoutTimer();
 			}
@@ -393,7 +393,7 @@ public class Client implements NotificationListener {
 	@Override
 	public void handleNotification(Notification notification, Object handback) {
 
-		Member deadMember = (Member) notification.getUserData();
+		Nodo deadMember = (Nodo) notification.getUserData();
 
 		System.out.println("Dead member detected: " + deadMember);
 

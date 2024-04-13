@@ -11,7 +11,7 @@ public class TimeoutTimer extends Timer {
 	 */
 	private long sleepTime;
 
-	private Member source;
+	private Nodo source;
 
 	/**
 	 * Creates a reset-able timer that wakes up after millisecondsSleepTime.
@@ -19,7 +19,7 @@ public class TimeoutTimer extends Timer {
 	 * @param client
 	 * @param member
 	 */
-	public TimeoutTimer(long millisecondsSleepTime, Client client, Member member) {
+	public TimeoutTimer(long millisecondsSleepTime, Client client, Nodo member) {
 		super();
 		this.sleepTime = millisecondsSleepTime;
 		this.source = member;
