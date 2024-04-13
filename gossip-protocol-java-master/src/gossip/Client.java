@@ -101,7 +101,7 @@ public class Client implements NotificationListener {
 		}
 		else {
 			// This is bad, so no need proceeding on
-			System.err.println("Could not find myself in startup list");
+			System.err.println("no me encuentro en la lista de inicio");
 			System.exit(-1);
 		}
 	}
@@ -144,7 +144,7 @@ public class Client implements NotificationListener {
 				Nodo nodo = getRandomnodo();
 
 				if(nodo != null) {
-					ByteArrayOutputStream baos = new ByteArrayOutputStream();
+					ByteArrayOutputStream baos = new ByteArrayOutputStream();// baos y oos son acronimos
 					ObjectOutputStream oos = new ObjectOutputStream(baos);
 					oos.writeObject(this.listaNodos);
 					byte[] buf = baos.toByteArray();
@@ -156,7 +156,7 @@ public class Client implements NotificationListener {
 					InetAddress dest;
 					dest = InetAddress.getByName(host);
 
-					System.out.println("Sending to " + dest);
+					System.out.println("enviando a " + dest);
 					System.out.println("---------------------");
 					for (Nodo m : listaNodos) {
 						System.out.println(m);
@@ -164,8 +164,8 @@ public class Client implements NotificationListener {
 					System.out.println("---------------------");
 					
 					//simulate some packet loss ~25%
-					int percentToSend = random.nextInt(100);
-					if(percentToSend > 25) {
+					int porcentaje_Infeccion = random.nextInt(100);
+					if(porcentaje_Infeccion > 25) {
 						DatagramSocket socket = new DatagramSocket();
 						DatagramPacket datagramPacket = new DatagramPacket(buf, buf.length, dest, port);
 						socket.send(datagramPacket);
@@ -275,7 +275,7 @@ public class Client implements NotificationListener {
 					if(readObject instanceof ArrayList<?>) {
 						ArrayList<Nodo> list = (ArrayList<Nodo>) readObject;
 
-						System.out.println("Received nodo list:");
+						System.out.println("Lista de nodo recibida:");
 						for (Nodo nodo : list) {
 							System.out.println(nodo);
 						}
